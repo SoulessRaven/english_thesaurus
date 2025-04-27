@@ -10,11 +10,12 @@ class InputTimeoutException(Exception):
 with open("data.json", "r", encoding="utf-8") as f:
     data = json.load(f)
 
+# function to collect a user input with a timeout feature
 def timeout_input(prompt, timeout=60):
     user_input = [None]
     
     def ask():
-        user_input[0] = input(prompt)
+        user_input[0] = input(prompt).strip()
     
     thread = threading.Thread(target=ask)
     thread.start()
@@ -25,6 +26,7 @@ def timeout_input(prompt, timeout=60):
     else:
         return user_input[0]
 
+# function that takes user input compares to it to a list of dict.keys and returns 3 most likely.
 def fuzzy_word(word):
     matches = gcmatcher(word, data.keys(), n=3, cutoff=0.7)
     if matches:
@@ -46,6 +48,7 @@ def fuzzy_word(word):
                 print("Please enter a valid number.")
     return word
 
+# function to search for the word (dict.key) in the dict and return all values
 def word_search(word):
     meanings = []
     
