@@ -1,13 +1,29 @@
 import json
 import textwrap
+import threading
+
 from difflib import get_close_matches as gcmatcher
+
+class InputTimeoutException(Exception):
+    pass
 
 with open("data.json", "r", encoding="utf-8") as f:
     data = json.load(f)
 
-def word_input():
-    word = input("Please enter a word to search for (or type '/exit' to quit): ").strip()
-    return word
+def timeout_input(prompt, timeout=60):
+    user_input = [None]
+    
+    def ask():
+        user_input[0] = input(prompt)
+    
+    thread = threading.Thread(target=ask)
+    thread.start()
+    thread.join(timeout)
+
+    if thread.is_alive():
+        raise InputTimeoutException
+    else:
+        return user_input[0]
 
 def fuzzy_word(word):
     matches = gcmatcher(word, data.keys(), n=3, cutoff=0.7)
@@ -52,9 +68,14 @@ def word_search(word):
     
 if __name__ == "__main__":
     while True:
-        search_word = word_input()
-        if search_word == "/exit":
-            print("Goodbye!")
+        try:
+            search_word = timeout_input("Please enter a word to search for (or type '/exit' to quit): ", timeout=60)
+            if search_word == "/exit":
+                print("Goodbye!")
+                break
+        except InputTimeoutException:
+            print("\nNo input detected. Exiting due to inactivity.")
             break
+
         search_word = fuzzy_word(search_word)
         print(word_search(search_word))
